@@ -8,7 +8,8 @@ local clearColor = { 0, 0, 0 }
 local bShowDemoWindow = false
 
 ---------------------------------------------------------------------
--- Usage:
+-- 图形化Log窗口, 采用imgui实现
+-- 使用方法，主线程调用:
 --  theAppLog.AddLog("Hello world");
 --  theAppLog.Draw("title");
 local theAppLog = 
@@ -85,6 +86,12 @@ end
 function love.update(dt)
     imgui.NewFrame()
 	
+	-- 收到辅助线程消息
+	local st = Wolves.SharedManager.FetchCurThreadMessage()
+	if st ~= nil and st.type == "Log" then
+		theAppLog:AddLog("[".. st.level .. "] " .. st.data)
+	end
+
 	local EGenericEvent =
 	{
 		eGE_None            = 0,
@@ -143,6 +150,7 @@ function love.draw()
 
 		local t = Wolves.SharedManager.NewSharedTable()
 		t.type = "Quit"
+		-- 发消息给辅助线程
 		Wolves.SharedManager.SendMessageToThread("Thread_Game", t)
 
 		love.window.close()

@@ -132,24 +132,71 @@ function RobotRun(robot, msDelta)
 		
 		--gs:ShowDebugWindow("gs")
 		--GameScene.s_WaitKey(1000)
-	end
+	--end
 
 	StateManager:Update(robot, msDelta)
 	
 end
 
 ---------------------------------------------------------------------
+-- 这些Log函数只在lua里面使用
+-- 因为是在线程里面调用，需要使用SendMessageToMainThread将日志输出到Log窗口
+function LogDebug(content)
+	local t = Wolves.SharedManager.NewSharedTable()
+	t.type = "Log"
+	t.level = "Debug"
+	t.data = content
+	Wolves.SharedManager.SendMessageToMainThread(t)
+	
+	-- to log to file
+	Wolves.LogDebug(content)
+end
+
+function LogInfo(content)
+	local t = Wolves.SharedManager.NewSharedTable()
+	t.type = "Log"
+	t.level = "Info "
+	t.data = content
+	Wolves.SharedManager.SendMessageToMainThread(t)
+	
+	-- to log to file
+	Wolves.LogInfo(content)
+end
+
+function LogWarn(content)
+	local t = Wolves.SharedManager.NewSharedTable()
+	t.type = "Log"
+	t.level = "Warn "
+	t.data = content
+	Wolves.SharedManager.SendMessageToMainThread(t)
+	
+	-- to log to file
+	Wolves.LogWarn(content)
+end
+
+function LogError(content)
+	local t = Wolves.SharedManager.NewSharedTable()
+	t.type = "Log"
+	t.level = "Error"
+	t.data = content
+	Wolves.SharedManager.SendMessageToMainThread(t)
+
+	-- to log to file
+	Wolves.LogError(content)
+end
+
+---------------------------------------------------------------------
 function main()
 
 	local robot = Wolves.GetRobot()
-	Wolves.LogInfo("Wolves.GetRobot()")
+	LogInfo("Wolves.GetRobot()")
 
 
 	g_UpdateTime.preTime = Wolves.GetCurTime()
 	g_UpdateTime.curTime = g_UpdateTime.preTime
 	
 	StateManager:ChangeState(robot, StateManager.stateUnknown)
-	Wolves.LogInfo("StateManager:ChangeState to stateUnknown")
+	LogInfo("StateManager:ChangeState to stateUnknown")
 	
 	local bRun = true
 	while bRun do
@@ -160,7 +207,7 @@ function main()
 
 		local st = Wolves.SharedManager.FetchCurThreadMessage()
 		if st ~= nil and st.type == "Quit" then
-			Wolves.LogInfo("Received Quit msg...")
+			LogInfo("Received Quit msg...")
 			bRun = false
 		end
 	end
@@ -219,6 +266,7 @@ Wolves
 		bool IsPixelMatched(SSize posStart, int offSetX, int offSetY, int pixelCount, SRGB rgb, SRGB rgbT)
 		bool IsGrayRect(SRect)
 	--]
+
 
 	bool WindowIsValid()					-- [线程安全]
 	WindowShowHide(b)						-- [线程安全] true for show
