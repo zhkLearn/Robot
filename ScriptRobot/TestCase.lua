@@ -1,4 +1,4 @@
--- lua.exe script.lua
+﻿-- lua.exe TestCase.lua
 
 --io.write("Waiting for debug hook...")
 --local str = io.read()

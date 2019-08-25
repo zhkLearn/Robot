@@ -1,18 +1,18 @@
--- StateScripts
+﻿-- StateScripts
 
 ---------------------------------------------------------------------
 State =
  {
 	name = "StateIdle",
 	OnEnter = function(self, robot)
-		robot:LogInfo("OnEnter: " .. self.name)
+		Wolves.LogInfo("OnEnter: " .. self.name)
 	end,
 
 	OnUpdate = function(self, robot, dtTime)
 	end,
 
 	OnLeave = function(self, robot)
-		robot:LogInfo("OnLeave: " .. self.name)
+		Wolves.LogInfo("OnLeave: " .. self.name)
 	end,
 
 	new = function(self, o)
@@ -26,14 +26,14 @@ State =
 ---------------------------------------------------------------------
 StateUnknown = State:new{name = "StateUnknown"}
 function StateUnknown:OnEnter(robot)
-	robot:LogInfo("OnEnter: " .. self.name)
+	Wolves.LogInfo("OnEnter: " .. self.name)
 end
 
 function StateUnknown:OnUpdate(robot, dtTime)
 
 	local rcOuts = robot:IsSubSceneMatched("coc_logo_desktop_ld")
 	if (rcOuts:Size() ~= 0) then
-		robot:LogInfo("Found COC icon in desktop.在模拟器桌面状态");
+		Wolves.LogInfo("Found COC icon in desktop.在模拟器桌面状态");
 		
 		local pt = rcOuts:At(1):Center();
 		print(pt)
@@ -44,10 +44,10 @@ function StateUnknown:OnUpdate(robot, dtTime)
 		rcOuts = robot:IsSubSceneMatched("WorkerIcon_NewTown")
 		if (rcOuts:Size() ~= 0) then
 
-			robot:LogInfo("In new town.在新基地");
+			Wolves.LogInfo("In new town.在新基地");
 			robot:ReportState("新基地")
 
-			StateManager:ChangeState(StateManager.stateNewTown)
+			StateManager:ChangeState(robot, StateManager.stateNewTown)
 			
 		else
 		
@@ -61,7 +61,7 @@ function StateUnknown:OnUpdate(robot, dtTime)
 			
 			if (rcOuts:Size() ~= 0) then
 
-				robot:LogInfo("In game main.在主基地");
+				Wolves.LogInfo("In game main.在主基地");
 				robot:ReportState("主基地")
 
 				-- 上报统计信息
@@ -72,9 +72,9 @@ function StateUnknown:OnUpdate(robot, dtTime)
 				local statVect = vectorStats()
 				statVect:Push(statItem)
 				robot:UpdateStats(statVect)
-				robot:LogInfo("上报统计信息");
+				Wolves.LogInfo("上报统计信息");
 				
-				StateManager:ChangeState(StateManager.stateMain)
+				StateManager:ChangeState(robot, StateManager.stateMain)
 				
 			end
 		end
@@ -84,13 +84,13 @@ function StateUnknown:OnUpdate(robot, dtTime)
 end
 
 function StateUnknown:OnLeave(robot)
-	print("OnLeave", self.name)
+	Wolves.LogInfo("OnLeave: " .. self.name)
 end
 
 ---------------------------------------------------------------------
 StateMain = State:new{name = "StateMain"}
 function StateMain:OnEnter(robot)
-	print("OnEnter", self.name)
+	Wolves.LogInfo("OnEnter: " .. self.name)
 end
 
 function StateMain:OnUpdate(robot, dtTime)
@@ -98,13 +98,13 @@ function StateMain:OnUpdate(robot, dtTime)
 end
 
 function StateMain:OnLeave(robot)
-	print("OnLeave", self.name)
+	Wolves.LogInfo("OnLeave: " .. self.name)
 end
 
 ---------------------------------------------------------------------
 StateNewTown = State:new{name = "StateNewTown"}
 function StateNewTown:OnEnter(robot)
-	print("OnEnter", self.name)
+	Wolves.LogInfo("OnEnter: " .. self.name)
 end
 
 function StateNewTown:OnUpdate(robot, dtTime)
@@ -112,7 +112,7 @@ function StateNewTown:OnUpdate(robot, dtTime)
 end
 
 function StateNewTown:OnLeave(robot)
-	print("OnLeave", self.name)
+	Wolves.LogInfo("OnLeave: " .. self.name)
 end
 
 ---------------------------------------------------------------------
@@ -121,11 +121,16 @@ StateManager.stateIdle = State:new()
 StateManager.stateUnknown = StateUnknown:new()
 StateManager.stateMain = StateMain:new()
 StateManager.stateNewTown = StateNewTown:new()
-StateManager.curState = StateManager.stateUnknown
+StateManager.curState = StateManager.stateIdle
 
 function StateManager:ChangeState(robot, s)
-	if s == nil or s == self.curState then
-		robot:LogError("ChangeState, cannot change to nil or same state!")
+	if s == nil then
+		LogError("ChangeState, cannot change to nil state!")
+		return
+	end
+
+	if s == self.curState then
+		LogError("ChangeState, cannot change to same state!")
 		return
 	end
 
@@ -145,25 +150,6 @@ function StateManager:Update(robot, dtTime)
 		self.curState:OnEnter(robot)	-- 避免第一次OnUpdate的dtTime过大
     elseif self.curState ~= nil then
 		self.curState:OnUpdate(robot, dtTime)
-	end
-	
-end
-
----------------------------------------------------------------------
-function RobotRun(robot, msDelta)
-
-	while true do
-	
-		StateManager:Update(robot, msDelta)
-	
-		local dtTime = UpdateTimeAdvance(robot, 30)
-		g_currentEvent = robot:Update(dtTime)
-		
-		if g_currentEvent == EGenericEvent.eGE_UserQuit or g_currentEvent == EGenericEvent.eGE_UserStop then
-			g_currentEvent = EGenericEvent.eGE_None
-			break
-		end
-
 	end
 	
 end
